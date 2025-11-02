@@ -1,0 +1,5 @@
+{
+  "name": "Sinja Coffee - Smart Point of Sale",
+  "description": "A comprehensive Point of Sale (POS) system with role-based access for admins and workers. Features include product and inventory management, a streamlined sales interface, customer loyalty program, and AI-powered sales insights and product description generation powered by the Gemini API.",
+  "requestFramePermissions": []
+}
