@@ -1,8 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { fetchOrders, fetchProducts } from '../../services/dataService';
 import { getSalesInsights } from '../../services/geminiService';
 import { Order, Product } from '../../types';
+import { useOnlineStatus } from '../../context/OnlineStatusContext';
 import { DollarSign, ShoppingBag, Box, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -23,6 +23,7 @@ const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [insights, setInsights] = useState<string>('');
   const [loadingInsights, setLoadingInsights] = useState<boolean>(false);
+  const { isOnline } = useOnlineStatus();
 
   useEffect(() => {
     const loadData = async () => {
@@ -93,8 +94,9 @@ const Dashboard: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">AI Sales Insights</h2>
           <button
             onClick={handleGetInsights}
-            disabled={loadingInsights}
+            disabled={loadingInsights || !isOnline}
             className="w-full mb-4 px-4 py-2 text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:bg-primary-400 flex items-center justify-center"
+            title={!isOnline ? "AI features are disabled in offline mode" : ""}
           >
             {loadingInsights ? (
               <>
@@ -108,7 +110,11 @@ const Dashboard: React.FC = () => {
           {insights ? (
             <div className="text-sm text-gray-600 dark:text-gray-300 prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: insights.replace(/\n/g, '<br />') }} />
           ) : (
-             <p className="text-sm text-gray-500 dark:text-gray-400">Click the button to get AI-powered insights on your sales data.</p>
+             <p className="text-sm text-gray-500 dark:text-gray-400">
+               {isOnline
+                ? "Click the button to get AI-powered insights on your sales data."
+                : "Connect to the internet to use AI-powered features."}
+             </p>
           )}
         </div>
       </div>

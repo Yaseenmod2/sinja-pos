@@ -8,9 +8,10 @@ const LoginScreen: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const ACCESS_CODE_LENGTH = 6;
 
   const handleKeyPress = (key: string) => {
-    if (accessCode.length < 4) {
+    if (accessCode.length < ACCESS_CODE_LENGTH) {
       setAccessCode(accessCode + key);
     }
   };
@@ -20,8 +21,8 @@ const LoginScreen: React.FC = () => {
   };
 
   const handleLogin = async () => {
-    if (accessCode.length !== 4) {
-      setError('Access code must be 4 digits.');
+    if (accessCode.length !== ACCESS_CODE_LENGTH) {
+      setError(`Access code must be ${ACCESS_CODE_LENGTH} digits.`);
       return;
     }
     setLoading(true);
@@ -34,7 +35,7 @@ const LoginScreen: React.FC = () => {
     setLoading(false);
   };
 
-  const pinDisplay = '••••'.split('').map((char, index) => (
+  const pinDisplay = Array.from({ length: ACCESS_CODE_LENGTH }).map((_, index) => (
     <div key={index} className={`w-10 h-10 sm:w-12 sm:h-12 border-2 rounded-md flex items-center justify-center text-3xl
       ${accessCode.length > index ? 'bg-primary-500 border-primary-500' : 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600'}`}>
       {accessCode.length > index ? '•' : ''}
@@ -52,7 +53,7 @@ const LoginScreen: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400">Enter your access code</p>
         </div>
 
-        <div className="flex justify-center space-x-3 mb-4">
+        <div className="flex justify-center space-x-2 mb-4">
           {pinDisplay}
         </div>
         

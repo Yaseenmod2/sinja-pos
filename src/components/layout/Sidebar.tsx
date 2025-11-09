@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
-import { BarChart2, ShoppingCart, Box, Users, Star, LogOut, Coffee, Tag } from 'lucide-react';
+import { BarChart2, ShoppingCart, Box, Users, Star, LogOut, Coffee, Tag, ClipboardList } from 'lucide-react';
 
 interface SidebarProps {
   activeView: string;
@@ -39,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
 
   const adminNavs = [
     { view: 'dashboard', label: 'Dashboard', icon: <BarChart2 className="h-5 w-5" /> },
+    { view: 'history', label: 'Order History', icon: <ClipboardList className="h-5 w-5" /> },
     { view: 'products', label: 'Products', icon: <Box className="h-5 w-5" /> },
     { view: 'categories', label: 'Categories', icon: <Tag className="h-5 w-5" /> },
     { view: 'customers', label: 'Customers', icon: <Star className="h-5 w-5" /> },

@@ -111,7 +111,7 @@ const UserManagement: React.FC = () => {
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg m-4 p-6 space-y-4">
                         <h2 className="text-2xl font-bold">{editingUser.id ? 'Edit' : 'Add'} User</h2>
                         <input type="text" placeholder="Name" value={editingUser.name || ''} onChange={e => setEditingUser({...editingUser, name: e.target.value})} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600"/>
-                        <input type="text" placeholder="Access Code (4 digits)" value={editingUser.accessCode || ''} onChange={e => setEditingUser({...editingUser, accessCode: e.target.value.replace(/\D/g, '').slice(0,4)})} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" maxLength={4}/>
+                        <input type="text" placeholder="Access Code (6 digits)" value={editingUser.accessCode || ''} onChange={e => setEditingUser({...editingUser, accessCode: e.target.value.replace(/\D/g, '').slice(0,6)})} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" maxLength={6}/>
                         <select value={editingUser.role} onChange={e => setEditingUser({...editingUser, role: e.target.value as UserRole})} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
                             <option value={UserRole.WORKER}>Worker</option>
                             {currentUser?.role === UserRole.ADMIN && (

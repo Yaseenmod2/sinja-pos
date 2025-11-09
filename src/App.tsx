@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { OnlineStatusProvider } from './context/OnlineStatusContext';
 import LoginScreen from './components/auth/LoginScreen';
 import Dashboard from './components/dashboard/Dashboard';
 import Sidebar from './components/layout/Sidebar';
@@ -9,12 +10,15 @@ import ProductManagement from './components/management/ProductManagement';
 import UserManagement from './components/management/UserManagement';
 import CustomerManagement from './components/management/CustomerManagement';
 import CategoryManagement from './components/management/CategoryManagement';
+import OrderHistory from './components/history/OrderHistory';
 import { UserRole } from './types';
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <Main />
+      <OnlineStatusProvider>
+        <Main />
+      </OnlineStatusProvider>
     </AuthProvider>
   );
 };
@@ -31,6 +35,8 @@ const Main: React.FC = () => {
     switch (activeView) {
       case 'dashboard':
         return isAdmin ? <Dashboard /> : <POSView />;
+      case 'history':
+        return isAdmin ? <OrderHistory /> : <POSView />;
       case 'pos':
         return <POSView />;
       case 'products':

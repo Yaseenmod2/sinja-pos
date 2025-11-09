@@ -4,8 +4,8 @@ const SEED_DATA_KEY = 'pos_seeded';
 
 const getInitialData = () => {
   const users: User[] = [
-    { id: 'user-1', name: 'Admin', role: UserRole.ADMIN, accessCode: '1111' },
-    { id: 'user-2', name: 'Jessica', role: UserRole.WORKER, accessCode: '2222' },
+    { id: 'user-1', name: 'Admin', role: UserRole.ADMIN, accessCode: '111111' },
+    { id: 'user-2', name: 'Jessica', role: UserRole.WORKER, accessCode: '222222' },
   ];
 
   const categories: Category[] = [
@@ -61,6 +61,7 @@ const [getProducts, setProducts] = withLocalStorage<Product[]>('pos_products', [
 const [getCategories, setCategories] = withLocalStorage<Category[]>('pos_categories', []);
 const [getCustomers, setCustomers] = withLocalStorage<Customer[]>('pos_customers', []);
 const [getOrders, setOrders] = withLocalStorage<Order[]>('pos_orders', []);
+const [getOfflineOrders, setOfflineOrders] = withLocalStorage<Order[]>('pos_offline_orders', []);
 
 // Seed initial data if it doesn't exist
 if (!localStorage.getItem(SEED_DATA_KEY)) {
@@ -118,12 +119,11 @@ export const createOrder = async (
     finalAmount: number,
     pointsRedeemed: number,
     user: User,
+    isOnline: boolean,
     customerId?: string
 ): Promise<Order> => {
+    // Stock update logic is the same for both online and offline
     const products = getProducts();
-    const customers = getCustomers();
-    
-    // Update stock
     cart.forEach(cartItem => {
         const productIndex = products.findIndex(p => p.id === cartItem.id);
         if (productIndex !== -1) {
@@ -132,19 +132,7 @@ export const createOrder = async (
     });
     setProducts(products);
     
-    // Points are earned only on the final amount paid with money, after point redemption discounts.
-    // The rate is 1 DH = 0.3 points.
     const pointsEarned = Math.floor(finalAmount * 0.3);
-
-    if (customerId) {
-        const customerIndex = customers.findIndex(c => c.id === customerId);
-        if (customerIndex !== -1) {
-            // Deduct redeemed points and add earned points
-            customers[customerIndex].loyaltyPoints -= pointsRedeemed;
-            customers[customerIndex].loyaltyPoints += pointsEarned;
-            setCustomers(customers);
-        }
-    }
 
     const newOrder: Order = {
         id: `order-${Date.now()}`,
@@ -158,7 +146,49 @@ export const createOrder = async (
         servedBy: user.id
     };
     
-    const orders = getOrders();
-    setOrders([...orders, newOrder]);
+    if (isOnline) {
+        if (customerId) {
+            const customers = getCustomers();
+            const customerIndex = customers.findIndex(c => c.id === customerId);
+            if (customerIndex !== -1) {
+                // Deduct redeemed points and add earned points
+                customers[customerIndex].loyaltyPoints -= pointsRedeemed;
+                customers[customerIndex].loyaltyPoints += pointsEarned;
+                setCustomers(customers);
+            }
+        }
+        const orders = getOrders();
+        setOrders([...orders, newOrder]);
+    } else {
+        const offlineOrders = getOfflineOrders();
+        setOfflineOrders([...offlineOrders, newOrder]);
+    }
+
     return Promise.resolve(newOrder);
+};
+
+export const syncOfflineOrders = async (): Promise<number> => {
+    const offlineOrders = getOfflineOrders();
+    if (offlineOrders.length === 0) {
+        return Promise.resolve(0);
+    }
+
+    const allOrders = getOrders();
+    const allCustomers = getCustomers();
+
+    offlineOrders.forEach(order => {
+        if (order.customerId) {
+            const customerIndex = allCustomers.findIndex(c => c.id === order.customerId);
+            if (customerIndex !== -1) {
+                allCustomers[customerIndex].loyaltyPoints -= order.pointsRedeemed;
+                allCustomers[customerIndex].loyaltyPoints += order.pointsEarned;
+            }
+        }
+    });
+    
+    setCustomers(allCustomers);
+    setOrders([...allOrders, ...offlineOrders]);
+    setOfflineOrders([]);
+    
+    return Promise.resolve(offlineOrders.length);
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Product, Category } from '../../types';
 import { fetchProducts, saveProducts, fetchCategories } from '../../services/dataService';
 import { generateProductDescription } from '../../services/geminiService';
+import { useOnlineStatus } from '../../context/OnlineStatusContext';
 import { Plus, Edit, Trash2, Sparkles } from 'lucide-react';
 import ConfirmationModal from '../common/ConfirmationModal';
 
@@ -13,6 +14,7 @@ const ProductManagement: React.FC = () => {
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
+    const { isOnline } = useOnlineStatus();
 
     useEffect(() => {
         loadData();
@@ -138,7 +140,12 @@ const ProductManagement: React.FC = () => {
                         
                         <div className="relative">
                             <textarea placeholder="Description" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" rows={3}/>
-                            <button onClick={handleGenerateDescription} disabled={isGeneratingDesc || !editingProduct.name} className="absolute bottom-2 right-2 flex items-center text-xs bg-primary-500 text-white px-2 py-1 rounded-md hover:bg-primary-600 disabled:bg-primary-300">
+                            <button 
+                                onClick={handleGenerateDescription} 
+                                disabled={isGeneratingDesc || !editingProduct.name || !isOnline} 
+                                className="absolute bottom-2 right-2 flex items-center text-xs bg-primary-500 text-white px-2 py-1 rounded-md hover:bg-primary-600 disabled:bg-primary-300 disabled:cursor-not-allowed"
+                                title={!isOnline ? "AI features are disabled in offline mode" : "Generate with AI"}
+                            >
                                 {isGeneratingDesc ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1"></div> : <Sparkles className="h-4 w-4 mr-1"/>}
                                 AI Gen
                             </button>

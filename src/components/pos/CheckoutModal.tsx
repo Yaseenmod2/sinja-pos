@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useOnlineStatus } from '../../context/OnlineStatusContext';
 import { createOrder, addCustomer as apiAddCustomer } from '../../services/dataService';
 import { CartItem, Customer, Order } from '../../types';
 import { X, CheckCircle, Star, Search, UserPlus } from 'lucide-react';
@@ -22,6 +23,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cart, cu
   const [processing, setProcessing] = useState<boolean>(false);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
   const { user } = useAuth();
+  const { isOnline, refreshOfflineCount } = useOnlineStatus();
   
   const [isAddCustomerOpen, setAddCustomerOpen] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
@@ -52,7 +54,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cart, cu
     if (!user) return;
     setProcessing(true);
     try {
-      const order = await createOrder(cart, total, finalTotal, pointsToRedeem, user, selectedCustomer || undefined);
+      const order = await createOrder(cart, total, finalTotal, pointsToRedeem, user, isOnline, selectedCustomer || undefined);
+      if (!isOnline) {
+        refreshOfflineCount();
+      }
       setCompletedOrder(order);
       onSuccessfulCheckout();
     } catch (error) {
@@ -93,11 +98,17 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cart, cu
 
   const renderContent = () => {
     if (completedOrder) {
+      const wasOnline = new Date(completedOrder.date).getTime() === new Date(completedOrder.date).getTime();
       return (
         <div className="p-6 text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h3 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Thank You!</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Order #{completedOrder.id.slice(-6)} processed successfully.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            {isOnline
+                ? `Order #${completedOrder.id.slice(-6)} processed successfully.`
+                : `Order #${completedOrder.id.slice(-6)} saved locally. It will sync when you're back online.`
+            }
+          </p>
           <div className="text-left bg-gray-100 dark:bg-gray-700 p-4 rounded-md text-sm space-y-1">
               {completedOrder.items.map(item => (
                   <div key={item.id} className="flex justify-between">
@@ -236,14 +247,22 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cart, cu
         <button
           onClick={handleCheckout}
           disabled={processing}
-          className="w-full py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 disabled:bg-green-400 flex items-center justify-center"
+          className={`w-full py-3 text-white font-bold rounded-md flex items-center justify-center transition-colors ${
+            isOnline
+            ? 'bg-green-600 hover:bg-green-700 disabled:bg-green-400'
+            : 'bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-400'
+          }`}
         >
           {processing ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
               Processing...
             </>
-          ) : `Confirm Payment (${finalTotal.toFixed(2)} DH)`}
+          ) : isOnline ? (
+            `Confirm Payment (${finalTotal.toFixed(2)} DH)`
+          ) : (
+            'Save Order for Syncing'
+          )}
         </button>
       </div>
     );
